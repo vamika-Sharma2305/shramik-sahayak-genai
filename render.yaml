@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: shramik-sahayak-genai
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
