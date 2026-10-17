@@ -15,6 +15,14 @@ uvicorn app.agent_pipeline:app --reload
 The health endpoint is available at `http://localhost:8000/health` and the API
 documentation at `http://localhost:8000/docs`.
 
+## Deploy on Vercel
+
+1. Open the [Vercel import page](https://vercel.com/new/import?repository-name=shramik-sahayak-genai&s=https%3A%2F%2Fgithub.com%2Fvamika-Sharma2305%2Fshramik-sahayak-genai&teamSlug=vamika-sharma) and import this repository.
+2. Add `OPENAI_API_KEY` under the project's Environment Variables. Keep it secret; do not commit it to the repository.
+3. Deploy. Vercel will provide the public deployment URL; the API docs are at `/docs` and the health endpoint is at `/health`.
+
+The Vercel function entry point is `api/index.py`, with routing configured in `vercel.json`.
+
 ## Deploy on Render
 
 1. Push this repository to GitHub.
