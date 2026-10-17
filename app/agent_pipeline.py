@@ -1,14 +1,22 @@
 import os
-from typing import Annotated, Dict, Any
+from functools import lru_cache
+from typing import Dict, Any
 from pydantic import BaseModel, Field
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, Form, HTTPException
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 import httpx
 
 app = FastAPI(title="Shramik Sahayak Core Engine")
-llm = ChatOpenAI(model="gpt-4o", temperature=0.1)
+
+
+@lru_cache(maxsize=1)
+def get_llm() -> ChatOpenAI:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is not configured")
+    return ChatOpenAI(model="gpt-4o", temperature=0.1, api_key=api_key)
 
 
 @app.get("/health")
@@ -58,7 +66,7 @@ def intent_routing_node(state: WorkerSessionState) -> WorkerSessionState:
 
     Return only the category name.
     """
-    res = llm.invoke([HumanMessage(content=prompt)]).content.strip()
+    res = get_llm().invoke([HumanMessage(content=prompt)]).content.strip()
     state.intent = res
     return state
 
@@ -83,7 +91,7 @@ def grievance_generator_node(state: WorkerSessionState) -> WorkerSessionState:
     [FORMAL_LETTER]
     <Official grievance letter>
     """
-    response = llm.invoke([SystemMessage(content=prompt)]).content
+    response = get_llm().invoke([SystemMessage(content=prompt)]).content
     state.response_text = response
     return state
 
@@ -109,6 +117,9 @@ async def handle_whatsapp_message(
     MediaUrl0: str = Form(None),
     language: str = Form("hi"),
 ):
+    if not os.getenv("OPENAI_API_KEY"):
+        raise HTTPException(status_code=503, detail="OPENAI_API_KEY is not configured")
+
     session = WorkerSessionState(
         user_phone=From,
         preferred_language=language,
